@@ -4,6 +4,8 @@ interface UserRegistrationUseCase {
     fun registerWithOAuth(command: RegisterWithOAuthCommand): UserRegistrationResponse
     fun linkOAuthAccount(command: LinkOAuthAccountCommand): UserResponse
     fun unlinkOAuthAccount(command: UnlinkOAuthAccountCommand): UserResponse
+    fun updateUser(command: UpdateUserCommand): UserResponse
+    fun getCurrentUser(userId: Long): UserResponse
 }
 
 data class RegisterWithOAuthCommand(
@@ -37,4 +39,9 @@ data class UserResponse(
     val email: String,
     val nickname: String,
     val linkedProviders: List<String>
+)
+
+data class UpdateUserCommand(
+    val userId: Long,
+    val nickname: String
 )

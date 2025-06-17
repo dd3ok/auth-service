@@ -47,3 +47,4 @@ logging:
   level:
     com.dd3ok.authservice: DEBUG
     org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

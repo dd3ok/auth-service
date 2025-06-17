@@ -3,6 +3,7 @@ package com.dd3ok.authservice.application.service
 import com.dd3ok.authservice.application.port.`in`.LinkOAuthAccountCommand
 import com.dd3ok.authservice.application.port.`in`.RegisterWithOAuthCommand
 import com.dd3ok.authservice.application.port.`in`.UnlinkOAuthAccountCommand
+import com.dd3ok.authservice.application.port.`in`.UpdateUserCommand
 import com.dd3ok.authservice.application.port.`in`.UserRegistrationResponse
 import com.dd3ok.authservice.application.port.`in`.UserRegistrationUseCase
 import com.dd3ok.authservice.application.port.`in`.UserResponse
@@ -97,6 +98,35 @@ class UserRegistrationService(
             email = this.email.value,
             nickname = this.nickname,
             linkedProviders = this.oauthAccounts.map { it.provider.displayName }
+        )
+    }
+
+    @Transactional(readOnly = true)
+    override fun getCurrentUser(userId: Long): UserResponse {
+        val user = userRepository.findById(UserId.of(userId))
+            ?: throw UserNotFoundException("User not found with id: $userId")
+
+        return UserResponse(
+            userId = user.id!!.value,
+            email = user.email.value,
+            nickname = user.nickname,
+            linkedProviders = user.oauthAccounts.map { it.provider.displayName }
+        )
+    }
+
+    @Transactional
+    override fun updateUser(command: UpdateUserCommand): UserResponse {
+        val user = userRepository.findById(UserId.of(command.userId))
+            ?: throw UserNotFoundException("User not found with id: ${command.userId}")
+
+        val updatedUser = user.copy(nickname = command.nickname)
+        userRepository.save(updatedUser)
+
+        return UserResponse(
+            userId = updatedUser.id!!.value,
+            email = updatedUser.email.value,
+            nickname = updatedUser.nickname,
+            linkedProviders = updatedUser.oauthAccounts.map { it.provider.displayName }
         )
     }
 }

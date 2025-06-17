@@ -1,70 +1,531 @@
+<!-- src/main/resources/templates/dashboard.html (완전 교체) -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .user-info, .oauth-accounts, .token-section, .jwt-status-section, .redis-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .oauth-account {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .btn {
+            padding: 8px 16px;
+            margin: 4px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-info { background-color: #17a2b8; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+
+        /* JWT 상태 관련 스타일 */
+        .jwt-status-section {
+            border-color: #007bff;
+            background-color: #f8f9ff;
+        }
+        .status-item {
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .status-valid { background-color: #d4edda; color: #155724; }
+        .status-expired { background-color: #f8d7da; color: #721c24; }
+        .status-warning { background-color: #fff3cd; color: #856404; }
+
+        /* Redis 관련 스타일 */
+        .redis-section {
+            border-color: #dc3545;
+            background-color: #fff8f8;
+        }
+        .redis-stats {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .token-item {
+            background-color: #f1f3f4;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .jwt-actions, .redis-actions {
+            margin-top: 15px;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
     <div class="dashboard-header">
-        <h1>🎉 로그인 성공!</h1>
-        <a href="#" onclick="logout()" class="logout-button">로그아웃</a>
+        <h1>🎉 OAuth 인증 대시보드</h1>
+        <button onclick="logout()" class="btn btn-danger">로그아웃</button>
     </div>
-    <p id="welcome-message">사용자 정보를 불러오는 중...</p>
 
-    <h3>Access Token</h3>
-    <div id="access-token-display" class="token-display">
-        토큰이 없습니다.
+    <!-- 사용자 정보 섹션 -->
+    <div class="user-info">
+        <h3>👤 내 정보</h3>
+        <p><strong>이메일:</strong> <span id="user-email">로딩중...</span></p>
+        <p><strong>닉네임:</strong>
+            <input type="text" id="user-nickname" style="display:none;">
+            <span id="nickname-display">로딩중...</span>
+            <button id="save-nickname-btn" class="btn btn-success" onclick="saveNickname()" style="display:none;">저장</button>
+        </p>
+    </div>
+
+    <!-- JWT 토큰 상태 모니터링 섹션 -->
+    <div class="jwt-status-section">
+        <h3>🔐 JWT 토큰 상태</h3>
+        <div class="jwt-info">
+            <div class="status-item">
+                <strong>로그인 상태:</strong>
+                <span id="auth-status" class="status-badge">확인 중...</span>
+            </div>
+            <div class="status-item">
+                <strong>토큰 만료까지:</strong>
+                <span id="token-countdown">계산 중...</span>
+            </div>
+            <div class="status-item">
+                <strong>마지막 API 호출:</strong>
+                <span id="last-api-call">없음</span>
+            </div>
+        </div>
+        <div class="jwt-actions">
+            <button class="btn btn-info" onclick="validateCurrentToken()">토큰 검증</button>
+            <button class="btn btn-warning" onclick="refreshAccessToken()">토큰 갱신</button>
+        </div>
+    </div>
+
+    <!-- Redis 캐시 상태 섹션 -->
+    <div class="redis-section">
+        <h3>🗄️ Redis 캐시 상태</h3>
+        <div class="redis-info" id="redis-info">
+            <p>Redis 정보를 불러오는 중...</p>
+        </div>
+        <div class="redis-actions">
+            <button class="btn btn-info" onclick="loadRedisInfo()">Redis 상태 확인</button>
+            <button class="btn btn-warning" onclick="clearRedisTokens()">Redis 토큰 삭제</button>
+            <button class="btn btn-success" onclick="testRefreshFlow()">토큰 갱신 테스트</button>
+        </div>
+    </div>
+
+    <!-- 연결된 계정 섹션 -->
+    <div class="oauth-accounts">
+        <h3>🔗 연결된 소셜 계정</h3>
+        <div id="linked-accounts">로딩중...</div>
+    </div>
+
+    <!-- 기존 토큰 정보 섹션 (간소화) -->
+    <div class="token-section">
+        <h3>📋 토큰 상세 정보</h3>
+        <div class="token-display" id="token-info">
+            <p><strong>Access Token:</strong> <span id="access-token">로딩중...</span></p>
+            <p><strong>만료 시간:</strong> <span id="token-expiry">로딩중...</span></p>
+        </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const accessToken = localStorage.getItem('accessToken');
-        const user = JSON.parse(localStorage.getItem('user'));
+    let currentUser = null;
+    let tokenCountdownInterval;
 
-        if (!accessToken || !user) {
-            alert('로그인이 필요합니다.');
-            window.location.href = '/login';
-            return;
-        }
-
-        document.getElementById('welcome-message').innerText = `${user.nickname}(${user.email})님, 환영합니다!`;
-        document.getElementById('access-token-display').innerText = accessToken;
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadUserInfo();
+        startTokenMonitoring();
+        setTimeout(loadRedisInfo, 1000); // 1초 후 Redis 정보 로드
     });
 
-    async function logout() {
+    // ===== 사용자 정보 관련 함수들 =====
+    async function loadUserInfo() {
         const accessToken = localStorage.getItem('accessToken');
-        const user = JSON.parse(localStorage.getItem('user'));
-
-        if (!accessToken || !user) {
+        if (!accessToken) {
             window.location.href = '/login';
             return;
         }
 
         try {
-            const response = await fetch('/api/v1/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: JSON.stringify({ userId: user.userId })
+            const response = await fetch('/api/v1/users/me', {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
             });
 
-            if (!response.ok) {
-                throw new Error('로그아웃에 실패했습니다.');
+            if (response.status === 401) {
+                const refreshed = await refreshAccessToken();
+                if (refreshed) {
+                    return loadUserInfo();
+                } else {
+                    window.location.href = '/login';
+                    return;
+                }
             }
 
+            const user = await response.json();
+            currentUser = user;
+
+            document.getElementById('user-email').textContent = user.email;
+            document.getElementById('nickname-display').textContent = user.nickname;
+            document.getElementById('user-nickname').value = user.nickname;
+
+            displayLinkedAccounts(user.linkedProviders);
+            displayTokenInfo();
+
         } catch (error) {
-            console.error('Logout Error:', error);
+            console.error('사용자 정보 로드 중 오류:', error);
+            alert('사용자 정보를 불러오는데 실패했습니다.');
+        }
+    }
+
+    function displayLinkedAccounts(providers) {
+        const container = document.getElementById('linked-accounts');
+        if (providers.length === 0) {
+            container.innerHTML = '<p>연결된 계정이 없습니다.</p>';
+            return;
+        }
+
+        container.innerHTML = providers.map(provider => `
+            <div class="oauth-account">
+                <span><strong>${provider}</strong> 계정 연결됨</span>
+                ${providers.length > 1 ?
+            `<button class="btn btn-danger" onclick="unlinkAccount('${provider.toLowerCase()}')">연결 해제</button>` :
+            `<span style="color: #666; font-size: 0.9em;">마지막 연결 계정</span>`
+        }
+            </div>
+        `).join('');
+    }
+
+    function editNickname() {
+        document.getElementById('nickname-display').style.display = 'none';
+        document.getElementById('user-nickname').style.display = 'inline';
+        document.getElementById('edit-nickname-btn').style.display = 'none';
+        document.getElementById('save-nickname-btn').style.display = 'inline';
+    }
+
+    async function saveNickname() {
+        const newNickname = document.getElementById('user-nickname').value;
+        const accessToken = localStorage.getItem('accessToken');
+
+        try {
+            const response = await fetch('/api/v1/users/me', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nickname: newNickname })
+            });
+
+            if (response.ok) {
+                document.getElementById('nickname-display').textContent = newNickname;
+                document.getElementById('nickname-display').style.display = 'inline';
+                document.getElementById('user-nickname').style.display = 'none';
+                document.getElementById('edit-nickname-btn').style.display = 'inline';
+                document.getElementById('save-nickname-btn').style.display = 'none';
+                alert('✅ 닉네임이 변경되었습니다.');
+            } else {
+                alert('❌ 닉네임 변경에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('닉네임 변경 중 오류:', error);
+            alert('❌ 닉네임 변경 중 오류가 발생했습니다.');
+        }
+    }
+
+    async function unlinkAccount(provider) {
+        if (!confirm(`${provider.toUpperCase()} 계정 연결을 해제하시겠습니까?`)) return;
+
+        const accessToken = localStorage.getItem('accessToken');
+        try {
+            const response = await fetch(`/api/v1/users/oauth/${provider}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+
+            if (response.ok) {
+                alert('✅ 계정 연결이 해제되었습니다.');
+                loadUserInfo(); // 새로고침
+            } else {
+                alert('❌ 계정 연결 해제에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('계정 연결 해제 중 오류:', error);
+            alert('❌ 계정 연결 해제 중 오류가 발생했습니다.');
+        }
+    }
+
+    // ===== JWT 토큰 모니터링 함수들 =====
+    function startTokenMonitoring() {
+        updateTokenStatus();
+        startTokenCountdown();
+        setInterval(updateTokenStatus, 30000); // 30초마다 상태 체크
+    }
+
+    function updateTokenStatus() {
+        const accessToken = localStorage.getItem('accessToken');
+        const statusElement = document.getElementById('auth-status');
+
+        if (!accessToken) {
+            statusElement.textContent = '로그아웃 상태';
+            statusElement.className = 'status-badge status-expired';
+            return;
+        }
+
+        try {
+            const payload = JSON.parse(atob(accessToken.split('.')[1]));
+            const now = Math.floor(Date.now() / 1000);
+            const expiresIn = payload.exp - now;
+
+            if (expiresIn <= 0) {
+                statusElement.textContent = '토큰 만료됨';
+                statusElement.className = 'status-badge status-expired';
+            } else if (expiresIn <= 300) { // 5분 이하
+                statusElement.textContent = '토큰 곧 만료';
+                statusElement.className = 'status-badge status-warning';
+            } else {
+                statusElement.textContent = '로그인 중';
+                statusElement.className = 'status-badge status-valid';
+            }
+        } catch (e) {
+            statusElement.textContent = '토큰 오류';
+            statusElement.className = 'status-badge status-expired';
+        }
+    }
+
+    function startTokenCountdown() {
+        if (tokenCountdownInterval) {
+            clearInterval(tokenCountdownInterval);
+        }
+
+        tokenCountdownInterval = setInterval(() => {
+            const accessToken = localStorage.getItem('accessToken');
+            const countdownElement = document.getElementById('token-countdown');
+
+            if (!accessToken) {
+                countdownElement.textContent = '토큰 없음';
+                return;
+            }
+
+            try {
+                const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                const now = Math.floor(Date.now() / 1000);
+                const expiresIn = payload.exp - now;
+
+                if (expiresIn <= 0) {
+                    countdownElement.textContent = '만료됨';
+                    countdownElement.style.color = 'red';
+                } else {
+                    const minutes = Math.floor(expiresIn / 60);
+                    const seconds = expiresIn % 60;
+                    countdownElement.textContent = `${minutes}분 ${seconds}초`;
+                    countdownElement.style.color = expiresIn <= 300 ? 'orange' : 'green';
+                }
+            } catch (e) {
+                countdownElement.textContent = '계산 불가';
+            }
+        }, 1000);
+    }
+
+    async function validateCurrentToken() {
+        const accessToken = localStorage.getItem('accessToken');
+        const now = new Date().toLocaleTimeString();
+
+        try {
+            const response = await fetch('/api/v1/users/me', {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+
+            document.getElementById('last-api-call').textContent = now;
+
+            if (response.ok) {
+                alert('✅ 토큰이 유효합니다!');
+                updateTokenStatus();
+            } else if (response.status === 401) {
+                alert('❌ 토큰이 만료되었습니다. 자동으로 갱신을 시도합니다.');
+                await refreshAccessToken();
+            } else {
+                alert('⚠️ API 호출 중 오류가 발생했습니다.');
+            }
+        } catch (error) {
+            console.error('Token validation error:', error);
+            alert('❌ 토큰 검증 중 오류가 발생했습니다.');
+        }
+    }
+
+    // ===== Redis 관련 함수들 =====
+    async function loadRedisInfo() {
+        const accessToken = localStorage.getItem('accessToken');
+
+        try {
+            const response = await fetch('/api/v1/redis/refresh-tokens', {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                displayRedisInfo(data);
+            } else {
+                document.getElementById('redis-info').innerHTML =
+                    '<p style="color: red;">❌ Redis 정보를 가져올 수 없습니다. (DebugController 구현 필요)</p>';
+            }
+        } catch (error) {
+            console.error('Redis info error:', error);
+            document.getElementById('redis-info').innerHTML =
+                '<p style="color: orange;">⚠️ Redis 연결 오류 (RedisController 설정 확인 필요)</p>';
+        }
+    }
+
+    function displayRedisInfo(data) {
+        const html = `
+            <div class="redis-stats">
+                <p><strong>내 Refresh Token 개수:</strong> ${data.userTokenCount}개</p>
+                <p><strong>Redis 전체 토큰 키:</strong> ${data.totalRedisTokenKeys}개</p>
+                <p><strong>Redis 사용자 키:</strong> ${data.userRedisKeys.join(', ') || '없음'}</p>
+            </div>
+            <div class="token-list">
+                <h4>내 Refresh Token 목록:</h4>
+                ${data.userTokens.map(token => `
+                    <div class="token-item">
+                        <p><strong>토큰:</strong> ${token.token}</p>
+                        <p><strong>만료:</strong> ${token.expiresAt}</p>
+                        <p><strong>상태:</strong>
+                            <span class="status-badge ${token.isValid ? 'status-valid' : 'status-expired'}">
+                                ${token.isValid ? '유효' : '만료/무효'}
+                            </span>
+                        </p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        document.getElementById('redis-info').innerHTML = html;
+    }
+
+    async function clearRedisTokens() {
+        if (!confirm('Redis에 저장된 모든 Refresh Token을 삭제하시겠습니까?')) return;
+
+        const accessToken = localStorage.getItem('accessToken');
+
+        try {
+            const response = await fetch('/api/v1/redis/refresh-tokens', {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+
+            if (response.ok) {
+                alert('✅ Redis Refresh Token이 삭제되었습니다.');
+                loadRedisInfo();
+            }
+        } catch (error) {
+            alert('❌ Redis 토큰 삭제 실패');
+        }
+    }
+
+    async function testRefreshFlow() {
+        alert('🔄 토큰 갱신 과정을 시연합니다:\n1. 기존 Redis 상태 확인\n2. 토큰 갱신 요청\n3. 새로운 Redis 상태 확인');
+
+        console.log('=== 토큰 갱신 전 Redis 상태 ===');
+        await loadRedisInfo();
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const refreshed = await refreshAccessToken();
+
+        if (refreshed) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log('=== 토큰 갱신 후 Redis 상태 ===');
+            await loadRedisInfo();
+            alert('✅ 토큰 갱신 완료!\n콘솔과 화면에서 Redis 상태 변화를 확인하세요.');
+        }
+    }
+
+    // ===== 공통 함수들 =====
+    function displayTokenInfo() {
+        const accessToken = localStorage.getItem('accessToken');
+        document.getElementById('access-token').textContent = accessToken ?
+            accessToken.substring(0, 50) + '...' : '없음';
+
+        try {
+            const payload = JSON.parse(atob(accessToken.split('.')[1]));
+            const expiry = new Date(payload.exp * 1000);
+            document.getElementById('token-expiry').textContent = expiry.toLocaleString();
+        } catch (e) {
+            document.getElementById('token-expiry').textContent = '알 수 없음';
+        }
+    }
+
+    async function refreshAccessToken() {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) return false;
+
+        try {
+            const response = await fetch('/api/v1/auth/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('accessToken', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                displayTokenInfo();
+                updateTokenStatus();
+                alert('✅ 토큰이 갱신되었습니다.');
+                return true;
+            } else {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                return false;
+            }
+        } catch (error) {
+            console.error('토큰 갱신 중 오류:', error);
+            return false;
+        }
+    }
+
+    async function logout() {
+        const accessToken = localStorage.getItem('accessToken');
+
+        try {
+            await fetch('/api/v1/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId: currentUser?.userId })
+            });
+        } catch (error) {
+            console.error('로그아웃 API 호출 실패:', error);
         } finally {
-            // API 호출 성공 여부와 관계없이 로컬 정보는 삭제
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             localStorage.removeItem('user');
-            alert('로그아웃 되었습니다.');
+            if (tokenCountdownInterval) {
+                clearInterval(tokenCountdownInterval);
+            }
             window.location.href = '/login';
         }
     }
