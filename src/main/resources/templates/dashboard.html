@@ -3,32 +3,72 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
+    <title>OAuth 인증 대시보드</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
-        .user-info, .oauth-accounts, .token-section, .jwt-status-section, .redis-section {
-            margin: 20px 0;
-            padding: 20px;
+        body {
+            font-size: 14px; /* 전체 폰트 크기 축소 */
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 600px; /* 컨테이너 크기 축소 */
+            padding: 15px; /* 패딩 축소 */
+        }
+
+        /* 헤더 크기 축소 */
+        .dashboard-header {
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .dashboard-header h1 {
+            font-size: 1.8em; /* 헤더 폰트 축소 */
+            margin: 0;
+        }
+
+        /* 섹션 공통 스타일 - 크기 축소 */
+        .user-info, .jwt-section, .redis-section {
+            margin: 10px 0; /* 마진 축소 */
+            padding: 15px; /* 패딩 축소 */
             border: 1px solid #ddd;
-            border-radius: 8px;
+            border-radius: 6px; /* 라운드 축소 */
         }
-        .oauth-account {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            margin: 5px 0;
-            background-color: #f9f9f9;
-            border-radius: 5px;
+
+        .user-info {
+            background-color: #f8f9fa;
         }
+        .jwt-section {
+            border-color: #007bff;
+            background-color: #f8f9ff;
+        }
+        .redis-section {
+            border-color: #dc3545;
+            background-color: #fff8f8;
+        }
+
+        /* 섹션 제목 크기 축소 */
+        .user-info h3, .jwt-section h3, .redis-section h3 {
+            font-size: 1.3em; /* 제목 폰트 축소 */
+            margin: 0 0 12px 0;
+        }
+
+        /* 사용자 정보 섹션 크기 축소 */
+        .user-info p {
+            margin: 8px 0; /* 마진 축소 */
+            font-size: 12px; /* 폰트 축소 */
+        }
+
+        /* 버튼 크기 축소 */
         .btn {
-            padding: 8px 16px;
-            margin: 4px;
+            padding: 6px 10px; /* 패딩 축소 */
+            margin: 2px; /* 마진 축소 */
             border: none;
-            border-radius: 4px;
+            border-radius: 3px; /* 라운드 축소 */
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
+            font-size: 12px; /* 폰트 축소 */
         }
         .btn-primary { background-color: #007bff; color: white; }
         .btn-danger { background-color: #dc3545; color: white; }
@@ -36,58 +76,126 @@
         .btn-info { background-color: #17a2b8; color: white; }
         .btn-warning { background-color: #ffc107; color: black; }
 
-        /* JWT 상태 관련 스타일 */
-        .jwt-status-section {
-            border-color: #007bff;
-            background-color: #f8f9ff;
+        /* 상태 표시 그리드 - 크기 축소 */
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px; /* 간격 축소 */
+            margin: 10px 0; /* 마진 축소 */
         }
         .status-item {
-            margin: 10px 0;
+            margin: 6px 0; /* 마진 축소 */
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 12px; /* 폰트 축소 */
         }
+        .status-item strong {
+            font-size: 11px; /* 레이블 폰트 축소 */
+        }
+
+        /* 상태 뱃지 크기 축소 */
         .status-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 2px 5px; /* 패딩 축소 */
+            border-radius: 3px; /* 라운드 축소 */
             font-weight: bold;
-            font-size: 0.9em;
+            font-size: 11px; /* 폰트 축소 */
         }
         .status-valid { background-color: #d4edda; color: #155724; }
         .status-expired { background-color: #f8d7da; color: #721c24; }
         .status-warning { background-color: #fff3cd; color: #856404; }
 
-        /* Redis 관련 스타일 */
-        .redis-section {
-            border-color: #dc3545;
-            background-color: #fff8f8;
+        .countdown-large {
+            font-size: 1em; /* 카운트다운 크기 축소 */
+            font-weight: bold;
         }
+
+        /* 토큰 상세 표시 크기 축소 */
+        .token-details {
+            margin: 10px 0; /* 마진 축소 */
+        }
+        .token-collapsible {
+            margin: 8px 0; /* 마진 축소 */
+        }
+        .token-collapsible summary {
+            cursor: pointer;
+            padding: 8px; /* 패딩 축소 */
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px; /* 라운드 축소 */
+            list-style: none;
+            outline: none;
+            font-size: 11px; /* 폰트 축소 */
+        }
+        .redis-section .token-collapsible summary {
+            background-color: #dc3545;
+        }
+        .token-content {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0 0 4px 4px; /* 라운드 축소 */
+            padding: 10px; /* 패딩 축소 */
+            font-family: 'Courier New', monospace;
+            font-size: 9px; /* 폰트 축소 */
+            word-break: break-all;
+            white-space: pre-wrap;
+            max-height: 80px; /* 높이 축소 */
+            overflow-y: auto;
+            margin: 0;
+        }
+
+        /* 액션 버튼 그룹 크기 축소 */
+        .action-buttons {
+            margin-top: 10px; /* 마진 축소 */
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px; /* 간격 축소 */
+        }
+
+        /* Redis 상태 표시 크기 축소 */
         .redis-stats {
             background-color: #f8f9fa;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
+            padding: 8px; /* 패딩 축소 */
+            margin: 8px 0; /* 마진 축소 */
+            border-radius: 3px; /* 라운드 축소 */
+            font-size: 10px; /* 폰트 축소 */
         }
         .token-item {
             background-color: #f1f3f4;
-            padding: 10px;
-            margin: 8px 0;
-            border-radius: 4px;
-            font-size: 0.9em;
+            padding: 6px; /* 패딩 축소 */
+            margin: 4px 0; /* 마진 축소 */
+            border-radius: 3px; /* 라운드 축소 */
+            font-size: 9px; /* 폰트 축소 */
         }
-        .jwt-actions, .redis-actions {
-            margin-top: 15px;
+
+        /* 입력 필드 크기 축소 */
+        input[type="text"] {
+            padding: 4px 6px; /* 패딩 축소 */
+            font-size: 11px; /* 폰트 축소 */
+            border: 1px solid #ccc;
+            border-radius: 3px; /* 라운드 축소 */
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
 <div class="container">
+    <!-- 헤더 크기 축소 -->
     <div class="dashboard-header">
-        <h1>🎉 OAuth 인증 대시보드</h1>
+        <h1>🎉 OAuth 대시보드</h1>
         <button onclick="logout()" class="btn btn-danger">로그아웃</button>
     </div>
 
-    <!-- 사용자 정보 섹션 -->
+    <!-- 사용자 정보 섹션 - 크기 축소 -->
     <div class="user-info">
         <h3>👤 내 정보</h3>
         <p><strong>이메일:</strong> <span id="user-email">로딩중...</span></p>
@@ -98,54 +206,83 @@
         </p>
     </div>
 
-    <!-- JWT 토큰 상태 모니터링 섹션 -->
-    <div class="jwt-status-section">
-        <h3>🔐 JWT 토큰 상태</h3>
-        <div class="jwt-info">
+    <!-- JWT 토큰 관리 섹션 -->
+    <div class="jwt-section">
+        <h3>🔐 JWT 토큰 관리</h3>
+
+        <!-- 상태 정보 그리드 -->
+        <div class="status-grid">
             <div class="status-item">
                 <strong>로그인 상태:</strong>
                 <span id="auth-status" class="status-badge">확인 중...</span>
             </div>
             <div class="status-item">
-                <strong>토큰 만료까지:</strong>
-                <span id="token-countdown">계산 중...</span>
+                <strong>토큰 만료:</strong>
+                <span id="token-countdown" class="countdown-large">계산 중...</span>
             </div>
             <div class="status-item">
                 <strong>마지막 API 호출:</strong>
                 <span id="last-api-call">없음</span>
             </div>
+            <div class="status-item">
+                <strong>만료 시간:</strong>
+                <span id="token-expiry">로딩중...</span>
+            </div>
         </div>
-        <div class="jwt-actions">
+
+        <!-- Access Token 상세 -->
+        <div class="token-details">
+            <details class="token-collapsible">
+                <summary>🔑 Access Token 상세 보기</summary>
+                <div id="access-token" class="token-content">Access Token을 불러오는 중...</div>
+            </details>
+        </div>
+
+        <!-- 액션 버튼들 -->
+        <div class="action-buttons">
             <button class="btn btn-info" onclick="validateCurrentToken()">토큰 검증</button>
             <button class="btn btn-warning" onclick="refreshAccessToken()">토큰 갱신</button>
+            <button class="btn btn-success" onclick="copyTokenToClipboard()">토큰 복사</button>
         </div>
     </div>
 
     <!-- Redis 캐시 상태 섹션 -->
     <div class="redis-section">
-        <h3>🗄️ Redis 캐시 상태</h3>
-        <div class="redis-info" id="redis-info">
-            <p>Redis 정보를 불러오는 중...</p>
+        <h3>🗄️ Redis 캐시 관리</h3>
+
+        <!-- Redis 상태 정보 -->
+        <div class="status-grid">
+            <div class="status-item">
+                <strong>Refresh Token:</strong>
+                <span id="redis-token-count" class="status-badge status-valid">로딩중...</span>
+            </div>
+            <div class="status-item">
+                <strong>Redis 전체 키:</strong>
+                <span id="redis-total-keys" class="status-badge status-valid">로딩중...</span>
+            </div>
+            <div class="status-item">
+                <strong>사용자 키:</strong>
+                <span id="redis-user-keys" class="status-badge status-valid">로딩중...</span>
+            </div>
+            <div class="status-item">
+                <strong>캐시 상태:</strong>
+                <span id="redis-cache-status" class="status-badge status-valid">연결됨</span>
+            </div>
         </div>
-        <div class="redis-actions">
+
+        <!-- Refresh Token 상세 -->
+        <div class="token-details">
+            <details class="token-collapsible">
+                <summary>🗄️ Refresh Token 상세 보기</summary>
+                <div id="redis-token-details" class="token-content">Redis 정보를 불러오는 중...</div>
+            </details>
+        </div>
+
+        <!-- 액션 버튼들 -->
+        <div class="action-buttons">
             <button class="btn btn-info" onclick="loadRedisInfo()">Redis 상태 확인</button>
             <button class="btn btn-warning" onclick="clearRedisTokens()">Redis 토큰 삭제</button>
-            <button class="btn btn-success" onclick="testRefreshFlow()">토큰 갱신 테스트</button>
-        </div>
-    </div>
-
-    <!-- 연결된 계정 섹션 -->
-    <div class="oauth-accounts">
-        <h3>🔗 연결된 소셜 계정</h3>
-        <div id="linked-accounts">로딩중...</div>
-    </div>
-
-    <!-- 기존 토큰 정보 섹션 (간소화) -->
-    <div class="token-section">
-        <h3>📋 토큰 상세 정보</h3>
-        <div class="token-display" id="token-info">
-            <p><strong>Access Token:</strong> <span id="access-token">로딩중...</span></p>
-            <p><strong>만료 시간:</strong> <span id="token-expiry">로딩중...</span></p>
+            <button class="btn btn-success" onclick="testRefreshFlow()">토큰 갱신 시연</button>
         </div>
     </div>
 </div>
@@ -157,10 +294,10 @@
     document.addEventListener('DOMContentLoaded', async function() {
         await loadUserInfo();
         startTokenMonitoring();
-        setTimeout(loadRedisInfo, 1000); // 1초 후 Redis 정보 로드
+        setTimeout(loadRedisInfo, 1000);
     });
 
-    // ===== 사용자 정보 관련 함수들 =====
+    // ===== 사용자 정보 관련 =====
     async function loadUserInfo() {
         const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) {
@@ -190,31 +327,12 @@
             document.getElementById('nickname-display').textContent = user.nickname;
             document.getElementById('user-nickname').value = user.nickname;
 
-            displayLinkedAccounts(user.linkedProviders);
             displayTokenInfo();
 
         } catch (error) {
             console.error('사용자 정보 로드 중 오류:', error);
             alert('사용자 정보를 불러오는데 실패했습니다.');
         }
-    }
-
-    function displayLinkedAccounts(providers) {
-        const container = document.getElementById('linked-accounts');
-        if (providers.length === 0) {
-            container.innerHTML = '<p>연결된 계정이 없습니다.</p>';
-            return;
-        }
-
-        container.innerHTML = providers.map(provider => `
-            <div class="oauth-account">
-                <span><strong>${provider}</strong> 계정 연결됨</span>
-                ${providers.length > 1 ?
-            `<button class="btn btn-danger" onclick="unlinkAccount('${provider.toLowerCase()}')">연결 해제</button>` :
-            `<span style="color: #666; font-size: 0.9em;">마지막 연결 계정</span>`
-        }
-            </div>
-        `).join('');
     }
 
     function editNickname() {
@@ -225,7 +343,12 @@
     }
 
     async function saveNickname() {
-        const newNickname = document.getElementById('user-nickname').value;
+        const newNickname = document.getElementById('user-nickname').value.trim();
+        if (!newNickname) {
+            alert('닉네임을 입력해주세요.');
+            return;
+        }
+
         const accessToken = localStorage.getItem('accessToken');
 
         try {
@@ -245,42 +368,22 @@
                 document.getElementById('edit-nickname-btn').style.display = 'inline';
                 document.getElementById('save-nickname-btn').style.display = 'none';
                 alert('✅ 닉네임이 변경되었습니다.');
+                if (currentUser) currentUser.nickname = newNickname;
             } else {
-                alert('❌ 닉네임 변경에 실패했습니다.');
+                const errorData = await response.json();
+                alert(`❌ 닉네임 변경 실패: ${errorData.message || '알 수 없는 오류'}`);
             }
         } catch (error) {
             console.error('닉네임 변경 중 오류:', error);
-            alert('❌ 닉네임 변경 중 오류가 발생했습니다.');
+            alert('❌ 닉네임 변경 중 네트워크 오류가 발생했습니다.');
         }
     }
 
-    async function unlinkAccount(provider) {
-        if (!confirm(`${provider.toUpperCase()} 계정 연결을 해제하시겠습니까?`)) return;
-
-        const accessToken = localStorage.getItem('accessToken');
-        try {
-            const response = await fetch(`/api/v1/users/oauth/${provider}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-
-            if (response.ok) {
-                alert('✅ 계정 연결이 해제되었습니다.');
-                loadUserInfo(); // 새로고침
-            } else {
-                alert('❌ 계정 연결 해제에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('계정 연결 해제 중 오류:', error);
-            alert('❌ 계정 연결 해제 중 오류가 발생했습니다.');
-        }
-    }
-
-    // ===== JWT 토큰 모니터링 함수들 =====
+    // ===== JWT 토큰 모니터링 =====
     function startTokenMonitoring() {
         updateTokenStatus();
         startTokenCountdown();
-        setInterval(updateTokenStatus, 30000); // 30초마다 상태 체크
+        setInterval(updateTokenStatus, 30000);
     }
 
     function updateTokenStatus() {
@@ -288,7 +391,7 @@
         const statusElement = document.getElementById('auth-status');
 
         if (!accessToken) {
-            statusElement.textContent = '로그아웃 상태';
+            statusElement.textContent = '로그아웃';
             statusElement.className = 'status-badge status-expired';
             return;
         }
@@ -299,10 +402,10 @@
             const expiresIn = payload.exp - now;
 
             if (expiresIn <= 0) {
-                statusElement.textContent = '토큰 만료됨';
+                statusElement.textContent = '만료됨';
                 statusElement.className = 'status-badge status-expired';
-            } else if (expiresIn <= 300) { // 5분 이하
-                statusElement.textContent = '토큰 곧 만료';
+            } else if (expiresIn <= 300) {
+                statusElement.textContent = '곧 만료';
                 statusElement.className = 'status-badge status-warning';
             } else {
                 statusElement.textContent = '로그인 중';
@@ -315,16 +418,14 @@
     }
 
     function startTokenCountdown() {
-        if (tokenCountdownInterval) {
-            clearInterval(tokenCountdownInterval);
-        }
+        if (tokenCountdownInterval) clearInterval(tokenCountdownInterval);
 
         tokenCountdownInterval = setInterval(() => {
             const accessToken = localStorage.getItem('accessToken');
             const countdownElement = document.getElementById('token-countdown');
 
             if (!accessToken) {
-                countdownElement.textContent = '토큰 없음';
+                countdownElement.textContent = '없음';
                 return;
             }
 
@@ -346,6 +447,19 @@
                 countdownElement.textContent = '계산 불가';
             }
         }, 1000);
+    }
+
+    function displayTokenInfo() {
+        const accessToken = localStorage.getItem('accessToken');
+        document.getElementById('access-token').textContent = accessToken || '토큰이 없습니다.';
+
+        try {
+            const payload = JSON.parse(atob(accessToken.split('.')[1]));
+            const expiry = new Date(payload.exp * 1000);
+            document.getElementById('token-expiry').textContent = expiry.toLocaleDateString() + ' ' + expiry.toLocaleTimeString();
+        } catch (e) {
+            document.getElementById('token-expiry').textContent = '알 수 없음';
+        }
     }
 
     async function validateCurrentToken() {
@@ -374,7 +488,22 @@
         }
     }
 
-    // ===== Redis 관련 함수들 =====
+    async function copyTokenToClipboard() {
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+            alert('❌ 복사할 토큰이 없습니다.');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(accessToken);
+            alert('✅ Access Token이 클립보드에 복사되었습니다.');
+        } catch (err) {
+            alert('❌ 클립보드 복사에 실패했습니다.');
+        }
+    }
+
+    // ===== Redis 관련 =====
     async function loadRedisInfo() {
         const accessToken = localStorage.getItem('accessToken');
 
@@ -387,47 +516,72 @@
                 const data = await response.json();
                 displayRedisInfo(data);
             } else {
-                document.getElementById('redis-info').innerHTML =
-                    '<p style="color: red;">❌ Redis 정보를 가져올 수 없습니다. (DebugController 구현 필요)</p>';
+                updateRedisStatus('disconnected');
             }
         } catch (error) {
-            console.error('Redis info error:', error);
-            document.getElementById('redis-info').innerHTML =
-                '<p style="color: orange;">⚠️ Redis 연결 오류 (RedisController 설정 확인 필요)</p>';
+            updateRedisStatus('error');
         }
     }
 
     function displayRedisInfo(data) {
-        const html = `
-            <div class="redis-stats">
-                <p><strong>내 Refresh Token 개수:</strong> ${data.userTokenCount}개</p>
-                <p><strong>Redis 전체 토큰 키:</strong> ${data.totalRedisTokenKeys}개</p>
-                <p><strong>Redis 사용자 키:</strong> ${data.userRedisKeys.join(', ') || '없음'}</p>
-            </div>
-            <div class="token-list">
-                <h4>내 Refresh Token 목록:</h4>
-                ${data.userTokens.map(token => `
-                    <div class="token-item">
-                        <p><strong>토큰:</strong> ${token.token}</p>
-                        <p><strong>만료:</strong> ${token.expiresAt}</p>
-                        <p><strong>상태:</strong>
-                            <span class="status-badge ${token.isValid ? 'status-valid' : 'status-expired'}">
-                                ${token.isValid ? '유효' : '만료/무효'}
-                            </span>
-                        </p>
-                    </div>
-                `).join('')}
-            </div>
-        `;
+        // Redis 상태 업데이트
+        document.getElementById('redis-token-count').textContent = `${data.userTokenCount}개`;
+        document.getElementById('redis-total-keys').textContent = `${data.totalRedisTokenKeys}개`;
+        document.getElementById('redis-user-keys').textContent = data.userRedisKeys.length > 0 ? '존재' : '없음';
+        document.getElementById('redis-cache-status').textContent = '연결됨';
 
-        document.getElementById('redis-info').innerHTML = html;
+        // Refresh Token 상세 정보
+        let tokenDetails = '';
+        if (data.userTokens.length > 0) {
+            tokenDetails = data.userTokens.map(token => `
+토큰: ${token.fullToken || token.token}
+만료: ${token.expiresAt}
+상태: ${token.isValid ? '유효' : '만료/무효'}
+---
+            `).join('');
+        } else {
+            tokenDetails = 'Redis에 저장된 Refresh Token이 없습니다.';
+        }
+
+        document.getElementById('redis-token-details').textContent = tokenDetails;
+    }
+
+    function updateRedisStatus(status) {
+        const elements = {
+            'redis-token-count': '0개',
+            'redis-total-keys': '0개',
+            'redis-user-keys': '없음',
+            'redis-cache-status': status === 'error' ? '오류' : '연결 안됨'
+        };
+
+        Object.entries(elements).forEach(([id, text]) => {
+            const element = document.getElementById(id);
+            element.textContent = text;
+            element.className = `status-badge ${status === 'error' ? 'status-expired' : 'status-warning'}`;
+        });
+
+        document.getElementById('redis-token-details').textContent = 'Redis 연결을 확인해주세요.';
+    }
+
+    async function testRefreshFlow() {
+        console.log('🔄 토큰 갱신 테스트 시작');
+        await loadRedisInfo();
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const refreshed = await refreshAccessToken();
+
+        if (refreshed) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log('✅ 토큰 갱신 완료');
+            await loadRedisInfo();
+            alert('✅ 토큰 갱신이 완료되었습니다!\n콘솔에서 Redis 상태 변화를 확인하세요.');
+        }
     }
 
     async function clearRedisTokens() {
         if (!confirm('Redis에 저장된 모든 Refresh Token을 삭제하시겠습니까?')) return;
 
         const accessToken = localStorage.getItem('accessToken');
-
         try {
             const response = await fetch('/api/v1/redis/refresh-tokens', {
                 method: 'DELETE',
@@ -439,45 +593,17 @@
                 loadRedisInfo();
             }
         } catch (error) {
-            alert('❌ Redis 토큰 삭제 실패');
-        }
-    }
-
-    async function testRefreshFlow() {
-        alert('🔄 토큰 갱신 과정을 시연합니다:\n1. 기존 Redis 상태 확인\n2. 토큰 갱신 요청\n3. 새로운 Redis 상태 확인');
-
-        console.log('=== 토큰 갱신 전 Redis 상태 ===');
-        await loadRedisInfo();
-
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const refreshed = await refreshAccessToken();
-
-        if (refreshed) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log('=== 토큰 갱신 후 Redis 상태 ===');
-            await loadRedisInfo();
-            alert('✅ 토큰 갱신 완료!\n콘솔과 화면에서 Redis 상태 변화를 확인하세요.');
+            alert('❌ Redis 토큰 삭제 실패 (RedisController 구현 필요)');
         }
     }
 
     // ===== 공통 함수들 =====
-    function displayTokenInfo() {
-        const accessToken = localStorage.getItem('accessToken');
-        document.getElementById('access-token').textContent = accessToken ?
-            accessToken.substring(0, 50) + '...' : '없음';
-
-        try {
-            const payload = JSON.parse(atob(accessToken.split('.')[1]));
-            const expiry = new Date(payload.exp * 1000);
-            document.getElementById('token-expiry').textContent = expiry.toLocaleString();
-        } catch (e) {
-            document.getElementById('token-expiry').textContent = '알 수 없음';
-        }
-    }
-
     async function refreshAccessToken() {
         const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) return false;
+        if (!refreshToken) {
+            alert('❌ Refresh Token이 없습니다.');
+            return false;
+        }
 
         try {
             const response = await fetch('/api/v1/auth/refresh', {
@@ -497,10 +623,12 @@
             } else {
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('refreshToken');
+                alert('❌ 토큰 갱신에 실패했습니다. 다시 로그인해주세요.');
                 return false;
             }
         } catch (error) {
             console.error('토큰 갱신 중 오류:', error);
+            alert('❌ 토큰 갱신 중 네트워크 오류가 발생했습니다.');
             return false;
         }
     }

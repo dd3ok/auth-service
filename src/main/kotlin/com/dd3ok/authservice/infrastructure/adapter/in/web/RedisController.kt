@@ -26,7 +26,7 @@ class RedisController(
             userRedisKeys = userRedisKeys,
             userTokens = userTokens.map { 
                 RefreshTokenInfo(
-                    token = it.token.take(20) + "...", // 보안을 위해 일부만 표시
+                    token = it.token,
                     expiresAt = it.expiresAt.toString(),
                     isValid = it.isValid()
                 )
