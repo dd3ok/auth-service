@@ -16,8 +16,10 @@ import com.dd3ok.authservice.application.port.out.UserRepository
 import com.dd3ok.authservice.domain.exception.InvalidOAuthStateException
 import com.dd3ok.authservice.domain.exception.UserNotFoundException
 import com.dd3ok.authservice.domain.model.RefreshToken
+import com.dd3ok.authservice.domain.model.User
 import com.dd3ok.authservice.domain.vo.OAuthProvider
 import com.dd3ok.authservice.domain.vo.UserId
+import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
