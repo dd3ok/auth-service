@@ -9,7 +9,8 @@ interface AuthenticationUseCase {
 data class OAuthAuthenticationCommand(
     val provider: String,
     val authorizationCode: String,
-    val redirectUri: String? = null
+    val redirectUri: String? = null,
+    val state: String? = null
 )
 
 data class RefreshTokenCommand(

@@ -92,15 +92,18 @@ class AuthenticationServiceTest {
         val command = OAuthAuthenticationCommand(
             provider = "google",
             authorizationCode = "auth-code-123",
-            redirectUri = "http://localhost:8080/callback"
+            redirectUri = "http://localhost:8080/callback",
+            state = "some-state" // state 추가
         )
 
         val user = createTestUser()
         val oauthTokenResponse = createOAuthTokenResponse()
         val oauthUserInfo = createOAuthUserInfo()
 
+        // ✨ 수정된 부분: getAccessToken에 state 파라미터 추가
         doReturn(oauthTokenResponse).whenever(oauthClientPort)
-            .getAccessToken(OAuthProvider.GOOGLE, "auth-code-123", command.redirectUri)
+            .getAccessToken(OAuthProvider.GOOGLE, "auth-code-123", command.redirectUri, command.state)
+
         doReturn(oauthUserInfo).whenever(oauthClientPort)
             .getUserInfo(OAuthProvider.GOOGLE, "oauth-access-token")
         doReturn(user).whenever(userRepository)
@@ -129,7 +132,8 @@ class AuthenticationServiceTest {
         // Given
         val command = OAuthAuthenticationCommand(
             provider = "google",
-            authorizationCode = "auth-code-123"
+            authorizationCode = "auth-code-123",
+            state = "some-state" // state 추가
         )
 
         val oauthTokenResponse = createOAuthTokenResponse()
@@ -142,8 +146,10 @@ class AuthenticationServiceTest {
         )
         val newUser = createTestUser().withId(UserId.of(2L))
 
+        // ✨ 수정된 부분: getAccessToken에 state 파라미터 추가
         doReturn(oauthTokenResponse).whenever(oauthClientPort)
-            .getAccessToken(OAuthProvider.GOOGLE, "auth-code-123", null)
+            .getAccessToken(OAuthProvider.GOOGLE, "auth-code-123", null, command.state)
+
         doReturn(oauthUserInfo).whenever(oauthClientPort)
             .getUserInfo(OAuthProvider.GOOGLE, "oauth-access-token")
         doReturn(null).whenever(userRepository)

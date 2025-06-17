@@ -32,13 +32,13 @@ class AuthenticationService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val userRegistrationService: UserRegistrationService
 ) : AuthenticationUseCase {
-    
+
     override fun authenticateWithOAuth(command: OAuthAuthenticationCommand): AuthenticationResponse {
         val provider = OAuthProvider.fromClientName(command.provider)
         
         // 1. OAuth 제공자로부터 사용자 정보 가져오기
-        val oauthUserInfo = getOAuthUserInfo(provider, command.authorizationCode, command.redirectUri)
-        
+        val oauthUserInfo = getOAuthUserInfo(provider, command.authorizationCode, command.redirectUri, command.state)
+
         // 2. 기존 사용자 찾기 또는 새 사용자 등록
         val user = findOrCreateUser(provider, oauthUserInfo)
         
@@ -81,9 +81,10 @@ class AuthenticationService(
     private fun getOAuthUserInfo(
         provider: OAuthProvider,
         authorizationCode: String,
-        redirectUri: String?
+        redirectUri: String?,
+        state: String?
     ): OAuthUserInfoResponse {
-        val tokenResponse = oauthClientPort.getAccessToken(provider, authorizationCode, redirectUri)
+        val tokenResponse = oauthClientPort.getAccessToken(provider, authorizationCode, redirectUri, state)
         return oauthClientPort.getUserInfo(provider, tokenResponse.accessToken)
     }
     

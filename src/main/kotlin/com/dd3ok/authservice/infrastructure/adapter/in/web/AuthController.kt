@@ -20,7 +20,8 @@ class AuthController(
         val command = OAuthAuthenticationCommand(
             provider = provider,
             authorizationCode = request.code,
-            redirectUri = request.redirectUri
+            redirectUri = request.redirectUri,
+            state = request.state
         )
 
         val response = authenticationUseCase.authenticateWithOAuth(command)
@@ -50,15 +51,12 @@ class AuthController(
         authenticationUseCase.logout(command)
         return ResponseEntity.noContent().build()
     }
-    @GetMapping("/ping")
-    fun ping(): ResponseEntity<String> {
-        return ResponseEntity.ok("pong")
-    }
 }
 
 data class OAuthLoginRequest(
     val code: String,
-    val redirectUri: String? = null
+    val redirectUri: String? = null,
+    val state: String? = null
 )
 
 data class RefreshTokenRequest(

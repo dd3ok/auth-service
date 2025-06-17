@@ -3,7 +3,7 @@ package com.dd3ok.authservice.application.port.out
 import com.dd3ok.authservice.domain.vo.OAuthProvider
 
 interface OAuthClientPort {
-    fun getAccessToken(provider: OAuthProvider, authorizationCode: String, redirectUri: String?): OAuthTokenResponse
+    fun getAccessToken(provider: OAuthProvider, authorizationCode: String, redirectUri: String?, state: String?): OAuthTokenResponse
     fun getUserInfo(provider: OAuthProvider, accessToken: String): OAuthUserInfoResponse
 }
 
