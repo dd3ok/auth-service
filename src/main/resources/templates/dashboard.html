@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="container">
+    <div class="dashboard-header">
+        <h1>🎉 로그인 성공!</h1>
+        <a href="#" onclick="logout()" class="logout-button">로그아웃</a>
+    </div>
+    <p id="welcome-message">사용자 정보를 불러오는 중...</p>
+
+    <h3>Access Token</h3>
+    <div id="access-token-display" class="token-display">
+        토큰이 없습니다.
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const accessToken = localStorage.getItem('accessToken');
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        if (!accessToken || !user) {
+            alert('로그인이 필요합니다.');
+            window.location.href = '/login';
+            return;
+        }
+
+        document.getElementById('welcome-message').innerText = `${user.nickname}(${user.email})님, 환영합니다!`;
+        document.getElementById('access-token-display').innerText = accessToken;
+    });
+
+    async function logout() {
+        const accessToken = localStorage.getItem('accessToken');
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        if (!accessToken || !user) {
+            window.location.href = '/login';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({ userId: user.userId })
+            });
+
+            if (!response.ok) {
+                throw new Error('로그아웃에 실패했습니다.');
+            }
+
+        } catch (error) {
+            console.error('Logout Error:', error);
+        } finally {
+            // API 호출 성공 여부와 관계없이 로컬 정보는 삭제
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            alert('로그아웃 되었습니다.');
+            window.location.href = '/login';
+        }
+    }
+</script>
+</body>
+</html>

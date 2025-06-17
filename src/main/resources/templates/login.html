@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>OAuth Login</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <h1>소셜 로그인</h1>
+    <p>사용할 계정을 선택하세요.</p>
+
+    <button class="oauth-button google" onclick="loginWith('google')">
+        <i class="fab fa-google"></i> Google로 로그인
+    </button>
+
+    <button class="oauth-button kakao" onclick="loginWith('kakao')">
+        <i class="fas fa-comment"></i> Kakao로 로그인
+    </button>
+
+    <button class="oauth-button naver" onclick="loginWith('naver')">
+        <i class="fas fa-bold"></i> Naver로 로그인
+    </button>
+</div>
+
+<script th:inline="javascript">
+    // 백엔드의 환경 변수에서 안전하게 클라이언트 ID를 가져옵니다.
+    const oauthConfig = {
+        google: {
+            clientId: /*[[${@environment.getProperty('oauth.google.client-id')}]]*/ 'YOUR_GOOGLE_CLIENT_ID',
+            redirectUri: /*[[${@environment.getProperty('oauth.google.redirect-uri')}]]*/ ''
+        },
+        kakao: {
+            clientId: /*[[${@environment.getProperty('oauth.kakao.client-id')}]]*/ 'YOUR_KAKAO_CLIENT_ID',
+            redirectUri: /*[[${@environment.getProperty('oauth.kakao.redirect-uri')}]]*/ ''
+        },
+        naver: {
+            clientId: /*[[${@environment.getProperty('oauth.naver.client-id')}]]*/ 'YOUR_NAVER_CLIENT_ID',
+            redirectUri: /*[[${@environment.getProperty('oauth.naver.redirect-uri')}]]*/ ''
+        }
+    };
+
+    function loginWith(provider) {
+        let url;
+        const config = oauthConfig[provider];
+
+        switch(provider) {
+            case 'google':
+                url = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                    `client_id=${config.clientId}&` +
+                    `redirect_uri=${config.redirectUri}&` +
+                    `response_type=code&` +
+                    `scope=openid email profile`;
+                break;
+            case 'kakao':
+                url = `https://kauth.kakao.com/oauth/authorize?` +
+                    `client_id=${config.clientId}&` +
+                    `redirect_uri=${config.redirectUri}&` +
+                    `response_type=code`;
+                break;
+            case 'naver':
+                const state = "RANDOM_STATE"; // CSRF 공격 방지를 위한 상태 토큰
+                url = `https://nid.naver.com/oauth2.0/authorize?` +
+                    `client_id=${config.clientId}&` +
+                    `redirect_uri=${config.redirectUri}&` +
+                    `response_type=code&` +
+                    `state=${state}`;
+                break;
+            default:
+                alert("지원하지 않는 로그인 방식입니다.");
+                return;
+        }
+        window.location.href = url;
+    }
+</script>
+</body>
+</html>
