@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/authdb
+    username: authuser
+    password: authpassword
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+oauth:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID}
+    client-secret: ${KAKAO_CLIENT_ID}
+    redirect-uri: http://localhost:8080/api/v1/oauth/kakao/callback
+  naver:
+    client-id: ${NAVER_CLIENT_ID}
+    client-secret: ${NAVER_CLIENT_ID}
+    redirect-uri: http://localhost:8080/api/v1/oauth/naver/callback
+  google:
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_ID}
+    redirect-uri: http://localhost:8080/api/v1/oauth/google/callback
+
+logging:
+  level:
+    com.dd3ok.authservice: DEBUG
+    org.springframework.security: DEBUG
