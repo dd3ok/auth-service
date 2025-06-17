@@ -2,6 +2,10 @@
 
 > JWT + Redis 기반 분산 인증 시스템 | Hexagonal Architecture
 
+![login.png](src/main/resources/static/login.png)
+
+![dashboard.png](src/main/resources/static/dashboard.png)
+
 ## 🚀 주요 기능
 
 ### **핵심 기능**
