@@ -1,0 +1,22 @@
+<!-- src/main/resources/templates/error.html -->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>에러 발생</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="container">
+    <h1 style="color: #e74c3c;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span th:text="${errorTitle ?: '오류 발생'}"></span>
+    </h1>
+    <p th:text="${errorMessage ?: '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'}"></p>
+    <a th:href="@{/login}" class="oauth-button" style="background-color: var(--primary-color); color: white; text-decoration: none;">
+        로그인 페이지로 돌아가기
+    </a>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/js/all.min.js"></script>
+</body>
+</html>

@@ -14,7 +14,8 @@
 <script th:inline="javascript">
     (async function() {
         const code = /*[[${code}]]*/ '';
-        const provider = window.location.pathname.split('/').pop();
+        const state = /*[[${state}]]*/ null;
+        const provider = /*[[${provider}]]*/ '';
         const redirectUri = window.location.origin + window.location.pathname;
 
         if (!code) {
@@ -26,12 +27,11 @@
         try {
             const response = await fetch(`/api/v1/auth/oauth/${provider}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     code: code,
-                    redirectUri: redirectUri
+                    redirectUri: redirectUri,
+                    state: state // state 값을 API로 전달
                 })
             });
 
@@ -46,7 +46,6 @@
                 localStorage.setItem('accessToken', data.tokens.accessToken);
                 localStorage.setItem('refreshToken', data.tokens.refreshToken);
                 localStorage.setItem('user', JSON.stringify(data.user));
-
                 window.location.href = '/dashboard';
             } else {
                 throw new Error('토큰 정보가 없습니다.');

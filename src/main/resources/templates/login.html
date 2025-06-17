@@ -28,18 +28,20 @@
     // 백엔드의 환경 변수에서 안전하게 클라이언트 ID를 가져옵니다.
     const oauthConfig = {
         google: {
-            clientId: /*[[${@environment.getProperty('oauth.google.client-id')}]]*/ 'YOUR_GOOGLE_CLIENT_ID',
+            clientId: /*[[${@environment.getProperty('oauth.google.client-id')}]]*/ '',
             redirectUri: /*[[${@environment.getProperty('oauth.google.redirect-uri')}]]*/ ''
         },
         kakao: {
-            clientId: /*[[${@environment.getProperty('oauth.kakao.client-id')}]]*/ 'YOUR_KAKAO_CLIENT_ID',
+            clientId: /*[[${@environment.getProperty('oauth.kakao.client-id')}]]*/ '',
             redirectUri: /*[[${@environment.getProperty('oauth.kakao.redirect-uri')}]]*/ ''
         },
         naver: {
-            clientId: /*[[${@environment.getProperty('oauth.naver.client-id')}]]*/ 'YOUR_NAVER_CLIENT_ID',
+            clientId: /*[[${@environment.getProperty('oauth.naver.client-id')}]]*/ '',
             redirectUri: /*[[${@environment.getProperty('oauth.naver.redirect-uri')}]]*/ ''
         }
     };
+
+    const naverLoginState = /*[[${state}]]*/ null;
 
     function loginWith(provider) {
         let url;
@@ -47,25 +49,30 @@
 
         switch(provider) {
             case 'google':
+                // Google은 state가 필수는 아니지만, 보안을 위해 추가하는 것이 좋음
                 url = `https://accounts.google.com/o/oauth2/v2/auth?` +
                     `client_id=${config.clientId}&` +
                     `redirect_uri=${config.redirectUri}&` +
                     `response_type=code&` +
-                    `scope=openid email profile`;
+                    `scope=openid email profile&`
                 break;
             case 'kakao':
+                // 카카오도 state 사용 가능
                 url = `https://kauth.kakao.com/oauth/authorize?` +
                     `client_id=${config.clientId}&` +
                     `redirect_uri=${config.redirectUri}&` +
-                    `response_type=code`;
+                    `response_type=code&`;
                 break;
             case 'naver':
-                const state = "RANDOM_STATE"; // CSRF 공격 방지를 위한 상태 토큰
+                if (!naverLoginState) {
+                    alert('네이버 로그인에 필요한 상태 토큰이 없습니다. 페이지를 새로고침 해주세요.');
+                    return;
+                }
                 url = `https://nid.naver.com/oauth2.0/authorize?` +
                     `client_id=${config.clientId}&` +
                     `redirect_uri=${config.redirectUri}&` +
                     `response_type=code&` +
-                    `state=${state}`;
+                    `state=${naverLoginState}`;
                 break;
             default:
                 alert("지원하지 않는 로그인 방식입니다.");
