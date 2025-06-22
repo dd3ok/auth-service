@@ -6,36 +6,36 @@
 
 ![dashboard.png](src/main/resources/static/dashboard.png)
 
-## 🚀 주요 기능
+## 주요 기능
 
 ### **핵심 기능**
-- 🔗 **멀티 소셜 로그인**: Google, Kakao, Naver OAuth 2.0
-- 🔑 **JWT 토큰 관리**: Access/Refresh Token 실시간 모니터링
-- 🗄️ **Redis 캐시**: 분산 환경 토큰 동기화
-- 📊 **실시간 대시보드**: JWT/Redis 상태 시각화
+-  **멀티 소셜 로그인**: Google, Kakao, Naver OAuth 2.0
+-  **JWT 토큰 관리**: Access/Refresh Token 실시간 모니터링
+- ️ **Redis 캐시**: 분산 환경 토큰 동기화
+-  **실시간 대시보드**: JWT/Redis 상태 시각화
 
 ### **기술 스택**
 - **Backend**: Kotlin + Spring Boot 3.x + Spring Security
 - **Database**: MySQL 8.x + Redis 7.x
 - **Architecture**: Hexagonal Architecture
 
-## ⚡ 빠른 시작
+## 빠른 시작
 
 ### **1. OAuth 클라이언트 ID/Secret 발급**
 
-#### **🟢 Google**
+#### **Google**
 1. [Google Cloud Console](https://console.cloud.google.com/) 접속
 2. 프로젝트 생성 → API 및 서비스 → 사용자 인증 정보
 3. OAuth 클라이언트 ID 생성 (웹 애플리케이션)
 4. 승인된 리디렉션 URI: `http://localhost:8080/auth/callback/google`
 
-#### **🟡 Kakao**
+#### **Kakao**
 1. [카카오 개발자센터](https://developers.kakao.com/) 접속
 2. 애플리케이션 추가 → 플랫폼 설정 → Web
 3. 카카오 로그인 활성화 → Redirect URI: `http://localhost:8080/auth/callback/kakao`
 4. 동의항목: 프로필 정보, 카카오계정(이메일) 설정
 
-#### **🟢 Naver**
+#### **Naver**
 1. [네이버 개발자센터](https://developers.naver.com/) 접속
 2. 애플리케이션 등록 → API 설정
 3. 서비스 URL: `http://localhost:8080`
@@ -67,7 +67,7 @@ docker-compose up -d
 - **로그인**: http://localhost:8080/login
 - **대시보드**: http://localhost:8080/dashboard
 
-## 🎯 사용 시나리오
+##  사용 시나리오
 
 ### **기본 인증 흐름**
 ```
